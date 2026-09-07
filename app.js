@@ -24,6 +24,7 @@ app.post('/signup', createUser);
 app.use(auth);
 
 app.use('/users', require('./routes/users'));
+app.use('/articles', require('./routes/articles'));
 
 app.use((req, res, next) => {
   next(new NotFoundError('Requested resource not found'));

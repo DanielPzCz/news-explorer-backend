@@ -6,6 +6,9 @@ const cors = require('cors');
 
 const { login, createUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
+const errorHandler = require('./middlewares/errorHandler');
+const { requestLogger, errorLogger } = require('./middlewares/logger');
+const { validateSignUp, validateSignIn } = require('./middlewares/validators');
 const NotFoundError = require('./errors/NotFoundError');
 const { PORT, DB_URL } = require('./utils/config');
 
@@ -18,8 +21,10 @@ app.use(express.json());
 
 mongoose.connect(DB_URL);
 
-app.post('/signin', login);
-app.post('/signup', createUser);
+app.use(requestLogger);
+
+app.post('/signin', validateSignIn, login);
+app.post('/signup', validateSignUp, createUser);
 
 app.use(auth);
 
@@ -30,12 +35,9 @@ app.use((req, res, next) => {
   next(new NotFoundError('Requested resource not found'));
 });
 
-app.use((err, req, res, next) => {
-  const { statusCode = 500, message } = err;
-  res.status(statusCode).send({
-    message: statusCode === 500 ? 'An error has occurred on the server' : message,
-  });
-});
+app.use(errorLogger);
+
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
